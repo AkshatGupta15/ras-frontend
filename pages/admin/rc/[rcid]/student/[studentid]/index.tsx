@@ -15,8 +15,10 @@ import { useRouter } from "next/router";
 import NotInterestedIcon from "@mui/icons-material/NotInterested";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
+import adminPvfRequest, {
+  AllStudentPvfResponse,
+} from "@callbacks/admin/rc/pvf";
 import adminResumeRequest, {
-  // AllStudentResumeResponse,
   StudentResumeResponse,
 } from "@callbacks/admin/rc/student/resumes";
 import DataGrid from "@components/DataGrid";
@@ -41,7 +43,6 @@ const transformName = (name: string) => {
 };
 
 const getURL = (url: string) => `${CDN_URL}/view/${url}`;
-
 const cols: GridColDef[] = [
   {
     field: "id",
@@ -145,6 +146,33 @@ function AcceptResumeButton(props: {
     </Button>
   );
 }
+function AcceptPvfButton(props: {
+  id: string;
+  updateCallback: () => Promise<void>;
+}) {
+  const { token } = useStore();
+  const { id, updateCallback } = props;
+  const router = useRouter();
+  const { rcid } = router.query;
+  const rid = (rcid || "").toString();
+  return (
+    <Button
+      variant="contained"
+      sx={{
+        marginInlineEnd: "0.5rem",
+      }}
+      onClick={() => {
+        adminPvfRequest
+          .putVerify(token, rid, id, { verified: true })
+          .then(() => {
+            updateCallback();
+          });
+      }}
+    >
+      Accept
+    </Button>
+  );
+}
 
 function RejectResumeButton(props: {
   id: string;
@@ -170,6 +198,31 @@ function RejectResumeButton(props: {
     </Button>
   );
 }
+function RejectPvfButton(props: {
+  id: string;
+  updateCallback: () => Promise<void>;
+}) {
+  const { token } = useStore();
+  const { id, updateCallback } = props;
+  const router = useRouter();
+  const { rcid } = router.query;
+  const rid = (rcid || "").toString();
+  return (
+    <Button
+      variant="contained"
+      onClick={() => {
+        adminPvfRequest
+          .putVerify(token, rid, id, { verified: false })
+          .then(() => {
+            updateCallback();
+          });
+      }}
+    >
+      Reject
+    </Button>
+  );
+}
+
 function Index() {
   const { rcid, studentid } = useRouter().query;
   const rid = (rcid || "").toString();
@@ -178,11 +231,11 @@ function Index() {
   const [questionAnswer, setQuestionAnswer] =
     useState<studentEnrollResponse[]>();
   const [student, setStudent] = useState<Student>({ student_id: 0 } as Student);
-
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
   const [studentResume, setStudentResume] = useState<StudentResumeResponse[]>(
     []
   );
+  const [studentPVF, setStudentPVF] = useState<AllStudentPvfResponse[]>([]);
   // const [resumeVerificationStatus, setResumeVerificationStatus] = useState("");
 
   useEffect(() => {
@@ -226,6 +279,7 @@ function Index() {
     if (res !== null && res?.length > 0) setStudentResume(res);
     else setStudentResume([]);
   }, [rid, token, sid]);
+  const updatePVFStatus = async () => {};
 
   const handleVerify = async () => {
     if (rcid !== undefined && rcid !== "" && student !== undefined) {
@@ -340,6 +394,106 @@ function Index() {
               <RejectResumeButton
                 id={cellValues.id.toString()}
                 updateCallback={updateResumeStatus}
+              />
+            </Container>
+          );
+        }
+      },
+    },
+  ];
+  const pvfCols: GridColDef[] = [
+    {
+      field: "ID",
+      headerName: "PVF ID",
+      align: "center",
+      headerAlign: "center",
+    },
+    {
+      field: "CreatedAt",
+      headerName: "Created At",
+      align: "center",
+      hide: true,
+    },
+    {
+      field: "UpdatedAt",
+      headerName: "Updated At",
+      align: "center",
+      hide: true,
+    },
+    {
+      field: "DeletedAt",
+      headerName: "Deleted At",
+      align: "center",
+      hide: true,
+    },
+    {
+      field: "recruitment_cycle_id",
+      headerName: "RID",
+      align: "center",
+      headerAlign: "center",
+    },
+    {
+      field: "student_recruitment_cycle_id",
+      headerName: "SID",
+      align: "center",
+      headerAlign: "center",
+    },
+    {
+      field: "pvf",
+      headerName: "PVF Link",
+      sortable: false,
+      align: "center",
+      width: 400,
+      headerAlign: "center",
+      valueGetter: (params) => getURL(params?.value),
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          sx={{ width: "100%" }}
+          onClick={() => {
+            window.open(params.value, "_blank");
+          }}
+        >
+          {transformName(params.value)}
+        </Button>
+      ),
+    },
+    {
+      field: "verified",
+      headerName: "Verification Status",
+      align: "center",
+      headerAlign: "center",
+      valueGetter: ({ value }) => {
+        if (value?.Valid) {
+          if (value?.Bool) return "Accepted";
+          return "Rejected";
+        }
+        if (!value?.Valid) return "Pending Verification";
+        return "Unknown";
+      },
+    },
+    {
+      field: "action_taken_by",
+      headerName: "Action Taken By",
+      align: "center",
+      headerAlign: "center",
+      hide: true,
+    },
+    {
+      field: "options",
+      headerName: "Accept/Reject PVF",
+      align: "center",
+      renderCell: (cellValues) => {
+        if (!cellValues.row.verified?.Valid || role === 100 || role === 101) {
+          return (
+            <Container>
+              <AcceptResumeButton
+                id={cellValues.id.toString()}
+                updateCallback={updatePVFStatus}
+              />
+              <RejectResumeButton
+                id={cellValues.id.toString()}
+                updateCallback={updatePVFStatus}
               />
             </Container>
           );
@@ -576,6 +730,15 @@ function Index() {
           heighted
           columns={resumeCols}
           rows={studentResume}
+          getRowId={(row) => row?.ID || 0}
+        />
+      </div>
+      <div style={{ marginTop: 50 }}>
+        <h2>PVF Verification</h2>
+        <DataGrid
+          heighted
+          columns={pvfCols}
+          rows={studentPVF}
           getRowId={(row) => row?.ID || 0}
         />
       </div>
