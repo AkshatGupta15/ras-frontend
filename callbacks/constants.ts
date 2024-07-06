@@ -1,11 +1,9 @@
 import { AxiosError, AxiosResponse } from "axios";
-
-export const BASE_URL = "https://placement.iitk.ac.in";
-
+export const BASE_URL = "http://localhost:62333";
 export const AUTH_URL = `${BASE_URL}/api/auth`;
 export const RAS_URL = `${BASE_URL}/api/ras`;
-
 export const STUDENT_URL = `${BASE_URL}/api/student`;
+export const ADMIN_URL = `${BASE_URL}/api/admin/application/rc`;
 export const COMPANY_URL = `${BASE_URL}/api/company`;
 
 export const ADMIN_RC_URL = `${BASE_URL}/api/admin/rc`;
