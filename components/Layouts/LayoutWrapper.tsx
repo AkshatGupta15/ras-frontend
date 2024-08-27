@@ -224,6 +224,11 @@ function LayoutWrapper({ children }: { children: JSX.Element }) {
           name: "Documents",
           id: "/documents",
         },
+        {
+          avatar: <SummarizeIcon />,
+          name: "Manage PVFs",
+          id: "/pvf",
+        },
       ],
       extra: [
         {
@@ -274,11 +279,6 @@ function LayoutWrapper({ children }: { children: JSX.Element }) {
           avatar: <ArticleIcon />,
           name: "Manage Resume",
           id: "/resume",
-        },
-        {
-          avatar: <SummarizeIcon />,
-          name: "Manage PVFs",
-          id: "/pvf",
         },
         {
           avatar: <TravelExploreIcon />,
