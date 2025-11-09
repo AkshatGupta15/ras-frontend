@@ -73,9 +73,14 @@ const getURL = (url: string) => `${CDN_URL}/view/${url}`;
 const columns: GridColDef[] = [
   {
     field: "ID",
-    headerName: "Resume ID",
+    headerName: "Resume",
     align: "center",
     headerAlign: "center",
+    renderCell: (params) => {
+      const id = params.row.resume_id ?? params.row.ID ?? params.row.rsid;
+      const tag = params.row.resume_tag;
+      return `${id}${tag ? `_${tag}` : ""}`;
+    },
   },
   {
     field: "resume",
@@ -416,6 +421,9 @@ function Resume() {
                   <MenuItem value="Others">Others</MenuItem>
                   <MenuItem value="BSBE Core">BSBE Core</MenuItem>
                   <MenuItem value="CE Core">CE Core</MenuItem>
+                  <MenuItem value="UI/UX">UI/UX</MenuItem>
+                  <MenuItem value="Product Design">Product Design</MenuItem>
+                  <MenuItem value="EE Core">EE Core</MenuItem>
                 </Select>
               </FormControl>
             )}
